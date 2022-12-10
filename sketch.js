@@ -21,10 +21,18 @@ function gotResults(error, results) {
 		console.error(error);
 	} else {
 		console.log(results);
-		let labelObject = results[0];
 		
-        console.log(labelObject);
-		console.log(typeof labelObject);
+		let list = document.getElementById("myList");
+		
+		results.forEach((item) => {
+			let li = document.createElement("li");
+			li.innerText = item;
+			list.appendChild(li);
+		});
+		
+		
+        console.log(results);
+		console.log(typeof results);
 
 		
 
