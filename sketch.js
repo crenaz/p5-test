@@ -4,7 +4,7 @@
 // corresponding to the latest version of ml5 printed to the console and in the p5.js canvas.
 
 // Initialize the Image Classifier method with MobileNet
-let mobilenet;
+let mobileNet;
 
 let puffin; 
 
@@ -13,7 +13,7 @@ console.log('ml5 version:', ml5.version);
 // When the model is loaded
 function modelReady() {
 	console.log('Model is ready!');
-	mobilenet.predict(puffin, gotResults)
+	mobileNet.predict(puffin, gotResults)
   }
 
 function gotResults(error, results) {
@@ -21,11 +21,17 @@ function gotResults(error, results) {
 		console.error(error);
 	} else {
 		console.log(results);
-		let label = results[0].className;
+		let labelObject = results[0];
+		
+        console.log(labelObject);
+		console.log(typeof labelObject);
+
+		
+
 		fill(0);
 		textSize(64);
-		text(label, 10, height - 100);
-		createP(label);
+		text(labelObject, 10, height - 100);
+		createP(labelObject);
 	}
 
 }
@@ -41,7 +47,7 @@ function setup(){
 	background(200);
 	textSize(width / 3);
 	textAlign(CENTER, CENTER);
-	mobilenet = ml5.imageClassifier('MobileNet', modelReady);
+	mobileNet = ml5.imageClassifier('MobileNet', modelReady);
 }
 
 function draw(){
