@@ -30,23 +30,21 @@ function gotResults(error, results) {
 			list.appendChild(li);
 		});
 
-
-		let objA = {
-			name: "christina",
+		let objA = { name: "christina",
 			degree: "music",
-			instrument: "flute"
+			instrument: "flute" }
+		
+		for(let key in objA) {
+			console.log(key + ":", objA[key]);
 		}
-		
-		console.log(objA);
-		alert(JSON.stringify(objA));
-		
 
-
+		for(let key in results[0]) {
+			console.log(key + ":", results[0][key]);
+		}
 
         console.log(results);
 		console.log(typeof results);
 
-		
 
 		fill(0);
 		textSize(64);
