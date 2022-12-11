@@ -6,14 +6,14 @@
 // Initialize the Image Classifier method with MobileNet
 let mobileNet;
 
-let puffin; 
+let video; 
 
 console.log('ml5 version:', ml5.version);
 
 // When the model is loaded
 function modelReady() {
 	console.log('Model is ready!');
-	mobileNet.predict(puffin, gotResults)
+	// mobileNet.predict(puffin, gotResults)
   }
 
 function gotResults(error, results) {
@@ -50,14 +50,15 @@ function gotResults(error, results) {
 
 }
 
-function imageReady() {
-	image(puffin, 0, 0, width, height);
-}
+// function imageReady() {
+// 	image(puffin, 0, 0, width, height);
+// }
 
 function setup(){
 	createCanvas(640, 480);
-	puffin = createImg('images/puffin.jpg', 'a puffin bird', imageReady);
-	puffin.hide();
+	video = createCapture(VIDEO);
+	//puffin = createImg('images/puffin.jpg', 'a puffin bird', imageReady);
+	//puffin.hide();
 	background(200);
 	textSize(width / 3);
 	textAlign(CENTER, CENTER);
