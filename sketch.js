@@ -23,33 +23,29 @@ function gotResults(error, results) {
 		console.log(results[0]);
 		
 		let list = document.getElementById("myList");
-		
+
+		for(let key in results[0]) {
+			let li = document.createElement("li");
+			li.innerText = key;
+			list.appendChild(li);
+			console.log(key + ":", results[0][key]);
+		}
+
 		results.forEach((item) => {
 			let li = document.createElement("li");
 			li.innerText = item;
 			list.appendChild(li);
 		});
 
-		let objA = { name: "christina",
-			degree: "music",
-			instrument: "flute" }
-		
-		for(let key in objA) {
-			console.log(key + ":", objA[key]);
-		}
 
-		for(let key in results[0]) {
-			console.log(key + ":", results[0][key]);
-		}
 
         console.log(results);
 		console.log(typeof results);
 
-
 		fill(0);
 		textSize(64);
-		text(results, 10, height - 100);
-		createP(results);
+		text(results[0], 10, height - 100);
+		createP(results[0]);
 	}
 
 }
@@ -68,6 +64,4 @@ function setup(){
 	mobileNet = ml5.imageClassifier('MobileNet', modelReady);
 }
 
-function draw(){
-	
-}
+function draw(){ }
