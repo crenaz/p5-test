@@ -20,7 +20,7 @@ function gotResults(error, results) {
 	if (error) {
 		console.error(error);
 	} else {
-		console.log(results);
+		console.log(results[0]);
 		
 		let list = document.getElementById("myList");
 		
@@ -38,8 +38,8 @@ function gotResults(error, results) {
 
 		fill(0);
 		textSize(64);
-		text(labelObject, 10, height - 100);
-		createP(labelObject);
+		text(results, 10, height - 100);
+		createP(results);
 	}
 
 }
