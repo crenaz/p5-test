@@ -29,8 +29,20 @@ function gotResults(error, results) {
 			li.innerText = item;
 			list.appendChild(li);
 		});
+
+
+		let objA = {
+			name: "christina",
+			degree: "music",
+			instrument: "flute"
+		}
 		
+		console.log(objA);
+		alert(JSON.stringify(objA));
 		
+
+
+
         console.log(results);
 		console.log(typeof results);
 
