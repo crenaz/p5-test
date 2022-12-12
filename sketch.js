@@ -20,24 +20,30 @@ function gotResults(error, results) {
 	if (error) {
 		console.error(error);
 	} else {
-		let keys = Object.keys(results[0]);
-		let valores = results[0];
-		console.log(valores);
-		console.log(typeof valores);
-
-		for (let key of keys) {
-			console.log(`${key}: ${valores[key]}`);
+		console.log(typeof results[0]);
+		console.log(results[0]);
+		
+		let rstls = (results[0]);
+		// let valores = results[0];
+		// console.log(valores);
+		// console.log(typeof valores);
+		for (const [key, value] of Object.entries(rstls)) {
+			console.log(`${key} => ${value}`);
 		}
+
+		// for (let key of keys) {
+		// 	console.log(`${key}: ${valores[key]}`);
+		// }
 
 
 		let list = document.getElementById("myList");
 
-		for(let key in results[0]) {
+		for(const [key, value] of Object.entries(rstls)) {
 			let li = document.createElement("li");
-			li.innerText = key;
+			li.innerText = (`${key}: ${value}`);
 			list.appendChild(li);
 		}
-		let birdName = (keys);
+		let birdName = Object.values(rstls.label);
 
 		fill(0);
 		textSize(64);
