@@ -20,18 +20,13 @@ function gotResults(error, results) {
 	if (error) {
 		console.error(error);
 	} else {
-		let testo = Object.keys(results[0]);
-		console.log(testo);
-		console.log(typeof testo);
+		let keys = Object.keys(results[0]);
+		let valores = results[0];
+		console.log(valores);
+		console.log(typeof valores);
 
-		const obj = {
-			name: 'John',
-			age: 30,
-			city: 'New York'
-		  };
-
-		for (const key of testo) {
-			console.log(`${key}: ${obj[key]}`);
+		for (let key of keys) {
+			console.log(`${key}: ${valores[key]}`);
 		}
 
 
@@ -41,10 +36,8 @@ function gotResults(error, results) {
 			let li = document.createElement("li");
 			li.innerText = key;
 			list.appendChild(li);
-			console.log(key + ":", results[0][key]);
 		}
-		let birdName = (results[0]);
-		birdName.toString();
+		let birdName = (keys);
 
 		fill(0);
 		textSize(64);
