@@ -13,15 +13,28 @@ console.log('ml5 version:', ml5.version);
 // When the model is loaded
 function modelReady() {
 	console.log('Model is ready!');
-	// mobileNet.predict(puffin, gotResults)
+	mobileNet.predict(puffin, gotResults)
   }
 
 function gotResults(error, results) {
 	if (error) {
 		console.error(error);
 	} else {
-		console.log(results[0]);
-		
+		let testo = Object.keys(results[0]);
+		console.log(testo);
+		console.log(typeof testo);
+
+		const obj = {
+			name: 'John',
+			age: 30,
+			city: 'New York'
+		  };
+
+		for (const key of testo) {
+			console.log(`${key}: ${obj[key]}`);
+		}
+
+
 		let list = document.getElementById("myList");
 
 		for(let key in results[0]) {
@@ -30,35 +43,25 @@ function gotResults(error, results) {
 			list.appendChild(li);
 			console.log(key + ":", results[0][key]);
 		}
-
-		results.forEach((item) => {
-			let li = document.createElement("li");
-			li.innerText = item;
-			list.appendChild(li);
-		});
-
-
-
-        console.log(results);
-		console.log(typeof results);
+		let birdName = (results[0]);
+		birdName.toString();
 
 		fill(0);
 		textSize(64);
-		text(results[0], 10, height - 100);
-		createP(results[0]);
+		text(birdName, 250, height - 100);
+		createP(results);
 	}
-
 }
 
-// function imageReady() {
-// 	image(puffin, 0, 0, width, height);
-// }
+function imageReady() {
+	image(puffin, 0, 0, width, height);
+}
 
 function setup(){
 	createCanvas(640, 480);
-	video = createCapture(VIDEO);
-	//puffin = createImg('images/puffin.jpg', 'a puffin bird', imageReady);
-	//puffin.hide();
+	//video = createCapture(VIDEO);
+	puffin = createImg('images/puffin.jpg', 'a puffin bird', imageReady);
+	puffin.hide();
 	background(200);
 	textSize(width / 3);
 	textAlign(CENTER, CENTER);
