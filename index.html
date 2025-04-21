@@ -12,19 +12,56 @@
 			body {
 				margin: 0;
 				padding: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				min-height: 100vh;
+				font-family: Arial, sans-serif;
 			}
 			canvas {
 				margin: auto;
 			}
 			li {
 				font-size: larger;
+				margin: 5px 0;
+				color: #333;
+			}
+			.content-wrapper {
+				width: 80%;
+				max-width: 800px;
+				margin: 20px auto;
+				text-align: center;
+				background-color: #f5f5f5;
+				padding: 20px;
+				border-radius: 8px;
+			}
+			ul {
+				list-style-position: inside;
+				padding: 0;
+				text-align: left;
+				margin: 10px auto;
+				min-height: 20px;
+				border: 1px solid #ddd;
+				padding: 10px;
+				background-color: white;
+			}
+			/* Debug styles */
+			ul:empty {
+				border: 1px solid red;
+			}
+			ul:empty::after {
+				content: "Waiting for data...";
+				color: #999;
+				font-style: italic;
 			}
 		</style>
 	</head>
 	<body>
-		<center><h1>ml5 - test</h1></center>
-		<ul id="aList"></ul>
-		<ul id="bList"></ul>
-		<ul id="cList"></ul>
+		<div class="content-wrapper">
+			<h1>ml5 - test</h1>
+			<ul id="aList"></ul>
+			<ul id="bList"></ul>
+			<ul id="cList"></ul>
+		</div>
 	</body>
 </html>
