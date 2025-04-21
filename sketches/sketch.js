@@ -5,94 +5,102 @@
 
 // Initialize the Image Classifier method with MobileNet
 let mobileNet;
-
 let video;
 
-console.log("ml5 version:", ml5.version);
+function setup() {
+  let canvas = createCanvas(640, 480);
+  canvas.parent("canvas-container");
 
-// When the model is loaded
+  console.log("Starting setup...");
+
+  // Create video capture
+  video = createCapture(VIDEO);
+  video.size(640, 480);
+  video.hide();
+
+  // Load the model
+  console.log("Loading MobileNet...");
+  mobileNet = ml5.imageClassifier("MobileNet", modelReady);
+
+  background(200);
+  textSize(32);
+  textAlign(CENTER, CENTER);
+}
+
 function modelReady() {
   console.log("Model is ready!");
-  mobileNet.predict(gotResults);
+  classifyVideo();
+}
+
+function classifyVideo() {
+  mobileNet.classify(video, gotResults);
 }
 
 function gotResults(error, results) {
   if (error) {
     console.error(error);
-  } else {
-    // Clear existing list items
-    document.getElementById("aList").innerHTML = "";
-    document.getElementById("bList").innerHTML = "";
-    document.getElementById("cList").innerHTML = "";
+    return;
+  }
 
-    let rstls = results[0];
+  console.log("Got results:", results);
 
-    // First list
-    let alist = document.getElementById("aList");
-    for (const [key, value] of Object.entries(rstls)) {
-      let li = document.createElement("li");
-      li.innerText = `${key}: ${value}`;
-      alist.appendChild(li);
-    }
+  const aList = document.getElementById("aList");
+  const bList = document.getElementById("bList");
+  const cList = document.getElementById("cList");
 
-    // Second list
-    let bList = document.getElementById("bList");
-    if (results[1]) {
-      // Add check to ensure results[1] exists
-      for (const [key, value] of Object.entries(results[1])) {
-        let li = document.createElement("li");
-        li.innerText = `${key}: ${value}`;
-        bList.appendChild(li);
-      }
-    }
+  if (aList && bList && cList) {
+    // Clear lists
+    aList.innerHTML = bList.innerHTML = cList.innerHTML = "";
 
-    // Third list
-    let cList = document.getElementById("cList");
-    if (results[2]) {
-      // Add check to ensure results[2] exists
-      for (const [key, value] of Object.entries(results[2])) {
-        let li = document.createElement("li");
-        li.innerText = `${key}: ${value}`;
+    // Update first list - Just primary prediction and confidence
+    let li = document.createElement("li");
+    li.innerText = `Label: ${results[0].label}`;
+    aList.appendChild(li);
+    li = document.createElement("li");
+    li.innerText = `Confidence: ${(results[0].confidence * 100).toFixed(2)}%`;
+    aList.appendChild(li);
+
+    // Update second list - Additional analysis information
+    const result = results[0];
+    // Split the label into parts if it contains commas
+    const labelParts = result.label.split(",");
+    labelParts.forEach((part, index) => {
+      li = document.createElement("li");
+      li.innerText = `Category ${index + 1}: ${part.trim()}`;
+      bList.appendChild(li);
+    });
+
+    // Add timestamp
+    li = document.createElement("li");
+    li.innerText = `Timestamp: ${new Date().toLocaleTimeString()}`;
+    bList.appendChild(li);
+
+    // Add frame number or counter
+    li = document.createElement("li");
+    if (!window.frameCounter) window.frameCounter = 0;
+    window.frameCounter++;
+    li.innerText = `Frame: ${window.frameCounter}`;
+    bList.appendChild(li);
+
+    // Update third list - Top 3 predictions
+    results.forEach((result, i) => {
+      if (i < 3) {
+        li = document.createElement("li");
+        li.innerText = `${i + 1}. ${result.label} (${(
+          result.confidence * 100
+        ).toFixed(2)}%)`;
         cList.appendChild(li);
       }
-    }
-
-    // Debug logging
-    console.log("Results:", results);
-    console.log("List A items:", alist.children.length);
-    console.log("List B items:", bList.children.length);
-    console.log("List C items:", cList.children.length);
-
-    let birdName = Object.values(rstls.label);
-    fill(0);
-    textSize(64);
-    text(birdName, 250, height - 100);
-
-    //doesn't work, as it shows 'undefined'
-    let prob = results[0].probability;
-    console.log(prob);
-    console.log(typeof prob);
-    createP(prob);
-    // call self again
-    mobileNet.predict(gotResults);
+    });
   }
-}
 
-// function imageReady() {
-// 	image(puffin, 0, 0, width, height);
-// }
+  // Draw label on canvas
+  fill(0);
+  textSize(32);
+  text(results[0].label, width / 2, height - 50);
 
-function setup() {
-  createCanvas(640, 480);
-  video = createCapture(VIDEO);
-  //puffin = createImg('images/puffin.jpg', 'a puffin bird', imageReady);
-  video.hide();
-  background(200);
-  textSize(width / 3);
-  textAlign(CENTER, CENTER);
-  mobileNet = ml5.imageClassifier("MobileNet", video, modelReady);
-  // the version number does not get printed out! :<
-  createP("ml5 version: " + ml5.version);
+  // Call classify again
+  classifyVideo();
 }
 
 function draw() {
