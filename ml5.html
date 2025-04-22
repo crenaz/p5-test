@@ -5,55 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Classifier</title>
-    <!-- Use specific versions of both libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
     <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
     <link rel="stylesheet" href="styles/main.css">
-    <style>
-        .uploadedImage {
-            max-width: 500px;
-            margin: 20px 0;
-            display: block;
-        }
-        .imageInput {
-            margin: 20px 0;
-            text-align: right;
-        }
-        .imageInput label {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-        .custom-file-upload {
-            display: inline-block;
-            padding: 6px 12px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 4px;
-            border: none;
-        }
-        .custom-file-upload:hover {
-            background-color: #45a049;
-        }
-        input[type="file"] {
-            display: none;
-        }
-        .imageResult {
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px solid #bbb;
-            background-color: #f9f9f9;
-        }
-        .prediction {
-            margin: 10px 0;
-            padding: 8px;
-            border-left: 4px solid #4CAF50;
-            background-color: white;
-        }
-        .prediction.top {
-            border-left-color: #2196F3;
-        }
-    </style>
+    <!-- Add theme.js script -->
+    <script src="scripts/theme.js"></script>
 </head>
 
 <body>
@@ -63,6 +19,24 @@
             <li><a href="objDetect.html">Object Detection</a></li>
             <li><a href="ml5.html" class="active">Image Classifier</a></li>
         </ul>
+        <div class="theme-switch-wrapper">
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
+                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
     </nav>
     <h1>ml5 Image Classifier</h1>
     
@@ -76,7 +50,6 @@
                 Upload
             </label>
         </div>
-
     </div>
     
     <script>

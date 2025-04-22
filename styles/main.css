@@ -1,56 +1,246 @@
-/* Add these new styles at the top of your CSS file */
+/* Theme variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --nav-bg: #333333;
+  --nav-text: #ffffff;
+  --border-color: #bbbbbb;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --card-bg: #ffffff;
+  --accent-color: #4CAF50;
+  --accent-hover: #45a049;
+  --prediction-bg: #f0f0f0;
+  --prediction-border: #4CAF50;
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --nav-bg: #000000;
+  --nav-text: #ffffff;
+  --border-color: #404040;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --card-bg: #333333;
+  --accent-color: #5CDF60;
+  --accent-hover: #4CBA50;
+  --prediction-bg: #333333;
+  --prediction-border: #5CDF60;
+}
+
+/* Apply theme variables to existing styles */
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Navigation styles */
 .nav-bar {
-    width: 100%;
-    background-color: #333;
-    padding: 1rem 0;
-    margin-bottom: 20px;
-    /* Add shadow */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    /* Optional: if you want the shadow to be slightly softer/more spread out */
-    /* box-shadow: 0 2px 8px rgba(0,0,0,0.08); */
+  width: 100%;
+  background-color: var(--nav-bg);
+  padding: 1rem 0;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .nav-bar ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    border: none;
-    background: none;
+  list-style: none;
+  margin: 0;
+  padding: 0 20px;
+  display: flex;
+  gap: 20px;
+  background: none;
+  border: none;
 }
 
 .nav-bar ul li {
-    margin: 0;
+  margin: 0;
+  padding: 0;
 }
 
-.nav-bar a {
-    color: white;
-    text-decoration: none;
-    font-size: 1.1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    transition: background-color 0.3s;
+.nav-bar ul li a {
+  color: var(--nav-text);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
 }
 
-.nav-bar a:hover {
-    background-color: #555;
+.nav-bar ul li a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-bar a.active {
-    background-color: #4CAF50;
+.nav-bar ul li a.active {
+  background-color: var(--accent-color);
 }
 
-/* Modify your existing body style to remove top margin */
-body {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    font-family: Arial, sans-serif;
+.content-wrapper {
+  width: 80%;
+  max-width: 800px;
+  margin: 20px auto;
+  text-align: left;
+  background-color: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.content-wrapper h2 {
+  color: var(--text-primary);
+  margin-top: 0;
+}
+
+/* Theme switch wrapper */
+.theme-switch-wrapper {
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+  height: 36px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+  color: var(--nav-text);
+  border-radius: 50%;
+}
+
+.theme-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.9);
+}
+
+/* Icon styles */
+.sun-icon,
+.moon-icon {
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  transition: opacity 0.3s ease, transform 0.5s ease;
+}
+
+/* Show/hide icons based on theme */
+[data-theme="light"] .sun-icon {
+  opacity: 1;
+  transform: rotate(0);
+}
+
+[data-theme="light"] .moon-icon {
+  opacity: 0;
+  transform: rotate(90deg);
+}
+
+[data-theme="dark"] .sun-icon {
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+[data-theme="dark"] .moon-icon {
+  opacity: 1;
+  transform: rotate(0);
+}
+
+/* Switch styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--accent-color);
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Update existing components */
+.controls-panel {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+ul {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+li {
+  color: var(--text-primary);
+}
+
+.prediction {
+  background-color: var(--card-bg);
+}
+
+.threshold-control {
+  background-color: var(--card-bg);
+}
+
+/* Add transition for smooth theme switching */
+* {
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 canvas {
@@ -107,9 +297,9 @@ ul {
     text-align: left;
     margin: 10px auto;
     min-height: 20px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     padding: 10px;
-    background-color: white;
+    background-color: var(--card-bg);
     width: 100%;
     box-sizing: border-box;
 }
@@ -126,7 +316,7 @@ ul:empty {
 
 ul:empty::after {
     content: "Waiting for data...";
-    color: #999;
+    color: var(--text-secondary);
     font-style: italic;
 }
 
@@ -139,9 +329,9 @@ ul:empty::after {
 #aList li {
     padding: 8px;
     margin: 4px 0;
-    background-color: #f0f0f0;
+    background-color: var(--bg-secondary);
     border-radius: 4px;
-    border-left: 4px solid; /* Remove specific color as it will be set dynamically */
+    border-left: 4px solid; /* Color will be set dynamically */
     width: 100%;
     box-sizing: border-box;
     display: block;
@@ -151,70 +341,85 @@ ul:empty::after {
 }
 
 #aList li.high-confidence {
-    background-color: #e3f2fd;
-    /* Remove border-left-color as it will be set dynamically */
+    background-color: var(--bg-secondary);
 }
 
 #aList li.no-detection {
-    border-left-color: #ff9800;
-    background-color: #fff3e0;
+    border-left-color: var(--accent-color);
+    background-color: var(--bg-secondary);
 }
 
 #aList li:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-primary);
     left: 5px;
 }
 
 .threshold-control {
     margin: 20px 0;
     padding: 15px;
-    background-color: #fff;
+    background-color: var(--card-bg);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
+    border: 1px solid var(--border-color);
 }
 
 .threshold-control label {
     display: block;
     margin-bottom: 10px;
     font-weight: bold;
-    color: #333;
+    color: var(--text-primary);
 }
 
+/* Base slider track */
 .slider {
     -webkit-appearance: none;
     width: 100%;
     height: 8px;
     border-radius: 5px;
-    background: #d3d3d3;
+    background: var(--bg-secondary);
     outline: none;
+    opacity: 0.9;
+    transition: opacity 0.3s;
 }
 
+/* Slider thumb */
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #4CAF50;
+    background: var(--accent-color);
     cursor: pointer;
-    transition: background .3s ease;
+    transition: background 0.3s ease;
 }
 
 .slider::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #4CAF50;
+    background: var(--accent-color);
     cursor: pointer;
-    transition: background .3s ease;
+    transition: background 0.3s ease;
+}
+
+/* Hover states */
+.slider:hover {
+    opacity: 1;
 }
 
 .slider::-webkit-slider-thumb:hover {
-    background: #45a049;
+    background: var(--accent-hover);
 }
 
 .slider::-moz-range-thumb:hover {
-    background: #45a049;
+    background: var(--accent-hover);
+}
+
+/* Focus states for better accessibility */
+.slider:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-color);
 }
 
 .stats-header {
@@ -268,18 +473,19 @@ ul:empty::after {
 }
 
 .controls-panel {
-    background: white;
+    background: var(--card-bg);
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
     width: 200px;
     height: fit-content;
+    border: 1px solid var(--border-color);
 }
 
 .controls-panel h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .toggle-control {
@@ -290,7 +496,7 @@ ul:empty::after {
 
 .toggle-label {
     margin-left: 10px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 /* Switch styling */
@@ -314,7 +520,7 @@ ul:empty::after {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: var(--bg-secondary);
     transition: .4s;
 }
 
@@ -325,12 +531,12 @@ ul:empty::after {
     width: 16px;
     left: 4px;
     bottom: 4px;
-    background-color: white;
+    background-color: var(--bg-primary);
     transition: .4s;
 }
 
 .switch input:checked + .slider {
-    background-color: #4CAF50;
+    background-color: var(--accent-color);
 }
 
 .switch input:checked + .slider:before {
@@ -345,27 +551,28 @@ ul:empty::after {
     border-radius: 50%;
 }
 
+/* Zone controls section */
 .control-section {
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-color);
 }
 
 .control-section h3 {
     margin-bottom: 12px;
-    color: #333;
+    color: var(--text-primary);
     font-size: 1em;
 }
 
 .zone-instructions {
     font-size: 0.9em;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 15px;
     line-height: 1.4;
-    background: #f9f9f9;
+    background: var(--bg-secondary);
     padding: 10px;
     border-radius: 4px;
-    border-left: 3px solid #4CAF50;
+    border-left: 3px solid var(--accent-color);
 }
 
 .zone-controls {
@@ -429,4 +636,128 @@ ul:empty::after {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Move styles from ml5.html to main.css */
+.uploadedImage {
+    max-width: 500px;
+    margin: 20px 0;
+    display: block;
+}
+
+.imageInput {
+    margin: 20px 0;
+    text-align: right;
+}
+
+.imageInput label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 4px;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.custom-file-upload:hover {
+    background-color: var(--accent-hover);
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.imageResult {
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.prediction {
+    margin: 10px 0;
+    padding: 8px;
+    border-left: 4px solid var(--accent-color);
+    background-color: var(--card-bg);
+}
+
+.prediction.top {
+    border-left-color: var(--accent-color);
+}
+
+/* Base styles */
+body {
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+}
+
+h1, h2, h3 {
+    color: var(--text-primary);
+}
+
+/* Content wrapper */
+.content-wrapper {
+    width: 80%;
+    max-width: 800px;
+    margin: 20px auto;
+    text-align: left;
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+/* Lists */
+ul {
+    list-style-position: inside;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+#aList, #bList, #cList {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+#aList li, #bList li, #cList li {
+    color: var(--text-primary);
+    padding: 8px;
+    margin: 4px 0;
+    border-radius: 4px;
+    background-color: var(--card-bg);
+}
+
+/* Canvas container */
+#canvas-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    background-color: var(--bg-secondary);
+    padding: 20px 0;
+    border-radius: 8px;
+}
+
+/* Loading state */
+#p5_loading {
+    color: var(--text-primary);
+}
+
+/* Ensure all transitions are smooth */
+* {
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
