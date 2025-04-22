@@ -1,3 +1,44 @@
+/* Add these new styles at the top of your CSS file */
+.nav-bar {
+    width: 100%;
+    background-color: #333;
+    padding: 1rem 0;
+    margin-bottom: 20px;
+}
+
+.nav-bar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    border: none;
+    background: none;
+}
+
+.nav-bar ul li {
+    margin: 0;
+}
+
+.nav-bar a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-bar a:hover {
+    background-color: #555;
+}
+
+.nav-bar a.active {
+    background-color: #4CAF50;
+}
+
+/* Modify your existing body style to remove top margin */
 body {
     margin: 0;
     padding: 0;
