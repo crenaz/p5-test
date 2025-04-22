@@ -3,9 +3,12 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>p5-test</title>
-		<script src="libraries/p5.js"></script>
-		<script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+		<title>Object Detection</title>
+		<!-- Load p5.js first -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+		<!-- Then load ml5.js -->
+		<script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+		<!-- Load our sketch last -->
 		<script src="sketches/detect-sketch.js"></script>
 		<link rel="stylesheet" href="styles/main.css">
 	</head>
@@ -14,10 +17,18 @@
 			<ul>
 				<li><a href="index.html">Image Classification</a></li>
 				<li><a href="objDetect.html" class="active">Object Detection</a></li>
-				<li><a href="ml5.html">Image Upload</a></li>
+				<li><a href="ml5.html">Image Classifier</a></li>
 			</ul>
 		</nav>
-		<h1>ml5 - Object Detect - test</h1>
-		<ul id="aList"></ul>
+		<h1>Object Detection with ml5</h1>
+		<div id="canvas-container"></div>
+		<div class="content-wrapper">
+			<div class="threshold-control">
+				<label for="confidenceThreshold">Confidence Threshold: <span id="thresholdValue">50</span>%</label>
+				<input type="range" id="confidenceThreshold" min="0" max="100" value="50" class="slider">
+			</div>
+			<h3>Detected Objects</h3>
+			<ul id="aList"></ul>
+		</div>
 	</body>
 </html>

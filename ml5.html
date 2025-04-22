@@ -2,6 +2,9 @@
 <html>
 
 <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Classifier</title>
     <!-- Use specific versions of both libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
     <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
@@ -15,6 +18,25 @@
         .imageInput {
             margin: 20px 0;
             text-align: right;
+        }
+        .imageInput label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            border: none;
+        }
+        .custom-file-upload:hover {
+            background-color: #45a049;
+        }
+        input[type="file"] {
+            display: none;
         }
         .imageResult {
             margin: 20px 0;
@@ -39,18 +61,22 @@
         <ul>
             <li><a href="index.html">Image Classification</a></li>
             <li><a href="objDetect.html">Object Detection</a></li>
-            <li><a href="ml5.html" class="active">Image Upload</a></li>
+            <li><a href="ml5.html" class="active">Image Classifier</a></li>
         </ul>
     </nav>
     <h1>ml5 Image Classifier</h1>
     
     <div class="content-wrapper">
-        <h2>Click "Browse" to Add an Image</h2>
+        <h2>Click "Upload" to Add an Image</h2>
         <img class="uploadedImage" id="uploadedImage" />
         <div class="imageResult" id="imageResult"></div>
         <div class="imageInput">
-            <input type="file" value="Upload" accept="image/*" oninput="handleImageUpload(this)">
+            <label class="custom-file-upload">
+                <input type="file" id="imageUpload" accept="image/*" oninput="handleImageUpload(this)">
+                Upload
+            </label>
         </div>
+
     </div>
     
     <script>
