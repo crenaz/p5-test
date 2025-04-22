@@ -4,6 +4,9 @@ let detections = [];
 let idCount = 0;
 let confidenceThreshold = 0.5; // 50% default threshold
 let frameRateValue = "0.0";
+let showBoxes = true;
+let showLabels = true;
+let showFPS = true;
 
 // Add statistics object
 let statistics = {
@@ -12,6 +15,30 @@ let statistics = {
   sessionStartTime: null,
   lastUpdate: null,
 };
+
+// Add this color mapping object at the top with other global variables
+const categoryColors = {
+  person: "#FF0000", // Red
+  car: "#00FF00", // Green
+  truck: "#0000FF", // Blue
+  bicycle: "#FFA500", // Orange
+  dog: "#800080", // Purple
+  cat: "#FFC0CB", // Pink
+  chair: "#008080", // Teal
+  bottle: "#FFD700", // Gold
+  laptop: "#4B0082", // Indigo
+  "cell phone": "#FF1493", // Deep Pink
+  // Add more categories as needed
+};
+
+// Add a function to get color for a category
+function getCategoryColor(category) {
+  // Convert category to lowercase for consistent matching
+  const normalizedCategory = category.toLowerCase();
+
+  // Return the mapped color or a default color if category isn't mapped
+  return categoryColors[normalizedCategory] || "#4CAF50"; // Default to your original green
+}
 
 function preload() {
   console.log("Starting preload...");
@@ -52,11 +79,26 @@ async function setupVideo() {
   }
 }
 
+function setupToggleControls() {
+  document.getElementById("toggleBoxes").addEventListener("change", (e) => {
+    showBoxes = e.target.checked;
+  });
+
+  document.getElementById("toggleLabels").addEventListener("change", (e) => {
+    showLabels = e.target.checked;
+  });
+
+  document.getElementById("toggleFPS").addEventListener("change", (e) => {
+    showFPS = e.target.checked;
+  });
+}
+
 function setup() {
   console.log("Starting setup...");
   let canvas = createCanvas(640, 480);
   canvas.parent("canvas-container");
   setupVideo();
+  setupToggleControls();
 
   // Setup threshold slider
   const slider = document.getElementById("confidenceThreshold");
@@ -146,6 +188,11 @@ function gotDetections(error, results) {
         }: ${confidence}% confidence (x: ${Math.round(
           detection.x
         )}, y: ${Math.round(detection.y)})`;
+
+        // Add color indicator
+        const color = getCategoryColor(detection.label);
+        li.style.borderLeftColor = color;
+
         if (detection.confidence > 0.8) {
           li.classList.add("high-confidence");
         }
@@ -222,16 +269,34 @@ function draw() {
       for (let i = objects.length - 1; i >= 0; i--) {
         let object = objects[i];
         if (object.label !== "person") {
-          stroke(0, 255, 0);
-          strokeWeight(4);
-          fill(0, 255, 0, object.timer);
-          rect(object.x, object.y, object.width, object.height);
+          const objectColor = getCategoryColor(object.label);
 
-          noStroke();
-          fill(0);
-          textSize(32);
-          text(`${object.label} ${object.id}`, object.x + 10, object.y + 24);
+          // Draw rectangle if enabled
+          if (showBoxes) {
+            stroke(objectColor);
+            strokeWeight(4);
+            noFill();
+            rect(object.x, object.y, object.width, object.height);
+          }
+
+          // Draw label if enabled
+          if (showLabels) {
+            const labelText = `${object.label} ${object.id}`;
+            const textWidth = textSize() * labelText.length * 0.6;
+            fill(objectColor + "80");
+            noStroke();
+            rect(
+              object.x + 10,
+              object.y + 24 - textSize(),
+              textWidth,
+              textSize() + 4
+            );
+            fill(255);
+            textSize(32);
+            text(labelText, object.x + 10, object.y + 24);
+          }
         }
+
         object.timer -= 2;
         if (object.timer < 0) {
           objects.splice(i, 1);
@@ -239,17 +304,19 @@ function draw() {
       }
     }
 
-    // Draw frame rate with red color and reduced opacity background
-    push();
-    noStroke();
-    fill(0, 0, 0, 100); // Reduced opacity to 100
-    rect(10, 10, 100, 30);
-    fill(255, 0, 0); // Keeping the bright red text
-    textSize(18);
-    textStyle(BOLD);
-    textAlign(LEFT, CENTER);
-    text(`FPS: ${frameRateValue}`, 20, 25);
-    pop();
+    // Draw frame rate if enabled
+    if (showFPS) {
+      push();
+      noStroke();
+      fill(0, 0, 0, 100);
+      rect(10, 10, 100, 30);
+      fill(255, 0, 0);
+      textSize(18);
+      textStyle(BOLD);
+      textAlign(LEFT, CENTER);
+      text(`FPS: ${frameRateValue}`, 20, 25);
+      pop();
+    }
   } else {
     background(200);
     fill(0);

@@ -21,7 +21,33 @@
 			</ul>
 		</nav>
 		<h1>Object Detection with ml5</h1>
-		<div id="canvas-container"></div>
+		<div class="canvas-controls-container">
+			<div id="canvas-container"></div>
+			<div class="controls-panel">
+				<h3>Display Controls</h3>
+				<div class="toggle-control">
+					<label class="switch">
+						<input type="checkbox" id="toggleBoxes" checked>
+						<span class="slider round"></span>
+					</label>
+					<span class="toggle-label">Bounding Boxes</span>
+				</div>
+				<div class="toggle-control">
+					<label class="switch">
+						<input type="checkbox" id="toggleLabels" checked>
+						<span class="slider round"></span>
+					</label>
+					<span class="toggle-label">Labels</span>
+				</div>
+				<div class="toggle-control">
+					<label class="switch">
+						<input type="checkbox" id="toggleFPS" checked>
+						<span class="slider round"></span>
+					</label>
+					<span class="toggle-label">FPS Counter</span>
+				</div>
+			</div>
+		</div>
 		<div class="content-wrapper">
 			<div class="threshold-control">
 				<label for="confidenceThreshold">Confidence Threshold: <span id="thresholdValue">50</span>%</label>
