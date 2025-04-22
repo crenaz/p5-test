@@ -3,6 +3,15 @@ let detector;
 let detections = [];
 let idCount = 0;
 let confidenceThreshold = 0.5; // 50% default threshold
+let frameRateValue = "0.0";
+
+// Add statistics object
+let statistics = {
+  totalDetections: 0,
+  categoryCount: {},
+  sessionStartTime: null,
+  lastUpdate: null,
+};
 
 function preload() {
   console.log("Starting preload...");
@@ -68,6 +77,12 @@ function gotDetections(error, results) {
     return;
   }
 
+  // Initialize session start time if not set
+  if (!statistics.sessionStartTime) {
+    statistics.sessionStartTime = new Date();
+  }
+  statistics.lastUpdate = new Date();
+
   // Only continue if video is ready
   if (!video || !video.elt.readyState === video.elt.HAVE_ENOUGH_DATA) {
     console.log("Waiting for video...");
@@ -80,14 +95,47 @@ function gotDetections(error, results) {
     (detection) => detection.confidence >= confidenceThreshold
   );
 
-  // Update the aList element with detections
+  // Update statistics
+  filteredResults.forEach((detection) => {
+    statistics.totalDetections++;
+    statistics.categoryCount[detection.label] =
+      (statistics.categoryCount[detection.label] || 0) + 1;
+  });
+
+  // Update the aList element with detections and statistics
   const aList = document.getElementById("aList");
   if (aList) {
     // Clear previous detections
     aList.innerHTML = "";
 
+    // Add statistics summary
+    const statsHeader = document.createElement("li");
+    statsHeader.classList.add("stats-header");
+    statsHeader.innerHTML = `
+        <strong>Session Statistics:</strong><br>
+        Total Detections: ${statistics.totalDetections}<br>
+        Session Duration: ${getSessionDuration()}<br>
+        Categories Detected: ${Object.keys(statistics.categoryCount).length}
+    `;
+    aList.appendChild(statsHeader);
+
+    // Add category breakdown
+    Object.entries(statistics.categoryCount)
+      .sort(([, a], [, b]) => b - a) // Sort by count, descending
+      .forEach(([category, count]) => {
+        const statItem = document.createElement("li");
+        statItem.classList.add("stat-item");
+        statItem.textContent = `${category}: ${count} detections`;
+        aList.appendChild(statItem);
+      });
+
+    // Add current detections
     if (filteredResults && filteredResults.length > 0) {
-      // Sort results by confidence
+      const currentHeader = document.createElement("li");
+      currentHeader.classList.add("current-header");
+      currentHeader.innerHTML = "<strong>Current Detections:</strong>";
+      aList.appendChild(currentHeader);
+
       filteredResults.sort((a, b) => b.confidence - a.confidence);
 
       filteredResults.forEach((detection) => {
@@ -103,14 +151,6 @@ function gotDetections(error, results) {
         }
         aList.appendChild(li);
       });
-    } else {
-      const li = document.createElement("li");
-      li.textContent =
-        filteredResults.length === 0
-          ? "No objects above confidence threshold"
-          : "No objects detected";
-      li.classList.add("no-detection");
-      aList.appendChild(li);
     }
   }
 
@@ -167,6 +207,11 @@ function gotDetections(error, results) {
 }
 
 function draw() {
+  // Update frame rate value every 10 frames
+  if (frameCount % 10 === 0) {
+    frameRateValue = frameRate().toFixed(1);
+  }
+
   // Only draw if video is ready
   if (video && video.elt.readyState === video.elt.HAVE_ENOUGH_DATA) {
     image(video, 0, 0);
@@ -177,18 +222,15 @@ function draw() {
       for (let i = objects.length - 1; i >= 0; i--) {
         let object = objects[i];
         if (object.label !== "person") {
-          // Draw rectangle
           stroke(0, 255, 0);
           strokeWeight(4);
           fill(0, 255, 0, object.timer);
           rect(object.x, object.y, object.width, object.height);
 
-          // Draw label text
           noStroke();
           fill(0);
           textSize(32);
-          let labelText = `${object.label} ${object.id}`;
-          text(labelText, object.x + 10, object.y + 24);
+          text(`${object.label} ${object.id}`, object.x + 10, object.y + 24);
         }
         object.timer -= 2;
         if (object.timer < 0) {
@@ -196,8 +238,19 @@ function draw() {
         }
       }
     }
+
+    // Draw frame rate with red color and reduced opacity background
+    push();
+    noStroke();
+    fill(0, 0, 0, 100); // Reduced opacity to 100
+    rect(10, 10, 100, 30);
+    fill(255, 0, 0); // Keeping the bright red text
+    textSize(18);
+    textStyle(BOLD);
+    textAlign(LEFT, CENTER);
+    text(`FPS: ${frameRateValue}`, 20, 25);
+    pop();
   } else {
-    // Draw loading message
     background(200);
     fill(0);
     noStroke();
@@ -205,4 +258,42 @@ function draw() {
     textAlign(CENTER, CENTER);
     text("Loading video...", width / 2, height / 2);
   }
+}
+
+// Helper function to calculate session duration
+function getSessionDuration() {
+  if (!statistics.sessionStartTime) return "Not started";
+
+  const diff = new Date() - statistics.sessionStartTime;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  } else {
+    return `${seconds}s`;
+  }
+}
+
+// Add function to export statistics
+function exportStatistics() {
+  const exportData = {
+    ...statistics,
+    sessionStartTime: statistics.sessionStartTime.toISOString(),
+    lastUpdate: statistics.lastUpdate.toISOString(),
+  };
+
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const dataUri =
+    "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+
+  const exportName = `detection-stats-${new Date().toISOString()}.json`;
+
+  const linkElement = document.createElement("a");
+  linkElement.setAttribute("href", dataUri);
+  linkElement.setAttribute("download", exportName);
+  linkElement.click();
 }
