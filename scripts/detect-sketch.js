@@ -11,6 +11,8 @@ let showFPS = true;
 const PERSISTENCE_TIMEOUT = 60; // Frames before object is removed (currently 100)
 const LERP_AMOUNT = 0.8; // Smoothing factor (currently 0.75)
 const MAX_MATCHING_DISTANCE = 150; // Maximum pixels distance for matching objects
+const MAX_HISTORY_ENTRIES = 100; // Maximum number of history entries to keep
+const SIGNIFICANT_CONFIDENCE_CHANGE = 0.15; // 15% confidence change threshold
 
 // Detection zones configuration
 let detectionZones = [];
@@ -310,6 +312,15 @@ function gotDetections(error, results) {
 
   // Update statistics display
   updateZoneStatistics();
+
+  // Log detection events
+  filteredResults.forEach((detection) => {
+    if (detection.isNew) {
+      logDetectionEvent(detection, "new");
+    } else {
+      logDetectionEvent(detection);
+    }
+  });
 
   // Continue detection
   detector.detect(video, gotDetections);
@@ -655,4 +666,117 @@ function formatDetectionData(detection) {
       height: Math.round(detection.height),
     },
   };
+}
+
+// Add this function to handle history logging
+function logDetectionEvent(detection, eventType = "detection") {
+  const timestamp = Date.now();
+  const entry = {
+    id: detection.id,
+    label: detection.label,
+    confidence: detection.confidence,
+    timestamp: timestamp,
+    eventType: eventType,
+    position: {
+      x: Math.round(detection.x),
+      y: Math.round(detection.y),
+    },
+    zone: getCurrentZone(detection),
+  };
+
+  // Check for significant confidence changes
+  const previousEntry = detectionHistory.entries
+    .filter((e) => e.id === detection.id)
+    .pop();
+
+  if (
+    previousEntry &&
+    Math.abs(previousEntry.confidence - detection.confidence) >
+      SIGNIFICANT_CONFIDENCE_CHANGE
+  ) {
+    entry.eventType = "confidence_change";
+    detectionHistory.statistics.confidenceChanges++;
+  }
+
+  // Update statistics
+  detectionHistory.statistics.totalEvents++;
+  detectionHistory.statistics.uniqueObjects.add(
+    `${detection.label}_${detection.id}`
+  );
+
+  // Add entry to history
+  detectionHistory.entries.unshift(entry);
+
+  // Trim history if needed
+  if (detectionHistory.entries.length > MAX_HISTORY_ENTRIES) {
+    detectionHistory.entries = detectionHistory.entries.slice(
+      0,
+      MAX_HISTORY_ENTRIES
+    );
+  }
+
+  // Update UI
+  updateHistoryDisplay();
+}
+
+// Helper function to get current zone
+function getCurrentZone(detection) {
+  for (let zone of detectionZones) {
+    if (isObjectInZone(detection, zone)) {
+      return zone.id;
+    }
+  }
+  return null;
+}
+
+// Add this function to update the history display
+function updateHistoryDisplay() {
+  const historyList = document.getElementById("historyList");
+  if (!historyList) return;
+
+  historyList.innerHTML = "";
+
+  // Add statistics summary
+  const statsHeader = document.createElement("li");
+  statsHeader.classList.add("history-stats");
+  statsHeader.innerHTML = `
+      <strong>Detection History Statistics</strong><br>
+      Total Events: ${detectionHistory.statistics.totalEvents}<br>
+      Unique Objects: ${detectionHistory.statistics.uniqueObjects.size}<br>
+      Confidence Changes: ${detectionHistory.statistics.confidenceChanges}
+  `;
+  historyList.appendChild(statsHeader);
+
+  // Add recent events
+  detectionHistory.entries.slice(0, 10).forEach((entry) => {
+    const li = document.createElement("li");
+    li.classList.add("history-entry");
+    li.classList.add(`event-${entry.eventType}`);
+
+    const timeDiff = Date.now() - entry.timestamp;
+    const timeAgo = formatTimeAgo(timeDiff);
+
+    li.innerHTML = `
+        <span class="history-time">${timeAgo}</span>
+        <span class="history-label">${entry.label} #${entry.id}</span>
+        <span class="history-confidence">${(entry.confidence * 100).toFixed(
+          1
+        )}%</span>
+        ${
+          entry.zone !== null
+            ? `<span class="history-zone">Zone ${entry.zone + 1}</span>`
+            : ""
+        }
+    `;
+
+    historyList.appendChild(li);
+  });
+}
+
+// Helper function to format time ago
+function formatTimeAgo(ms) {
+  if (ms < 1000) return "just now";
+  if (ms < 60000) return `${Math.floor(ms / 1000)}s ago`;
+  if (ms < 3600000) return `${Math.floor(ms / 60000)}m ago`;
+  return `${Math.floor(ms / 3600000)}h ago`;
 }

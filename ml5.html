@@ -41,18 +41,23 @@
     <h1>ml5 Image Classifier</h1>
     
     <div class="content-wrapper">
-        <h2>Click "Upload" to Add an Image</h2>
-        <img class="uploadedImage" id="uploadedImage" />
-        <div class="imageResult" id="imageResult"></div>
-        <div class="imageInput">
-            <label class="custom-file-upload">
-                <input type="file" id="imageUpload" accept="image/*" oninput="handleImageUpload(this)">
-                Upload
-            </label>
+        <h2>Click "Upload" or Drag & Drop an Image</h2>
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-text">
+                Drag & drop your image here
+                <span>or</span>
+                <label class="custom-file-upload">
+                    <input type="file" id="imageUpload" accept="image/*" oninput="handleImageUpload(this)">
+                    Upload
+                </label>
+            </div>
+            <img class="uploadedImage" id="uploadedImage" />
         </div>
+        <div class="imageResult" id="imageResult"></div>
     </div>
     
     <script>
+    const dropZone = document.getElementById('dropZone');
     const element = document.getElementById("imageResult");
     const uploadedImage = document.getElementById("uploadedImage");
     let classifier;
@@ -64,29 +69,128 @@
             element.innerHTML = "Model loaded. Please select an image.";
         });
     });
-    
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight drop zone when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('drop-zone-active');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('drop-zone-active');
+    }
+
+    // Handle dropped files
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    }
+
     function handleImageUpload(input) {
         if (input.files && input.files[0]) {
-            element.innerHTML = "Loading image...";
-            uploadedImage.src = window.URL.createObjectURL(input.files[0]);
-            uploadedImage.onload = () => {
-                element.innerHTML = "Analyzing image...";
-                if (classifier) {
-                    classifier.classify(uploadedImage, (err, results) => {
-                        if (err) {
-                            console.error('Classification error:', err);
-                            element.innerHTML = "Error analyzing image.";
-                            return;
+            handleFiles(input.files);
+        }
+    }
+
+    // Add this function for image preview resizing
+    function resizeImage(file, maxWidth, maxHeight) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Calculate new dimensions while maintaining aspect ratio
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
                         }
-                        
-                        console.log("Classification results:", results);
-                        
-                        if (results && results.length > 0) {
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to blob
+                    canvas.toBlob((blob) => {
+                        resolve({
+                            url: URL.createObjectURL(blob),
+                            width: width,
+                            height: height
+                        });
+                    }, file.type);
+                };
+            };
+        });
+    }
+
+    // Update handleFiles function to use image resizing
+    async function handleFiles(files) {
+        if (files[0].type.startsWith('image/')) {
+            element.innerHTML = "Loading image...";
+            
+            try {
+                // Resize image before preview
+                const resizedImage = await resizeImage(files[0], 800, 600);
+                uploadedImage.src = resizedImage.url;
+                
+                // Add size information to the preview
+                uploadedImage.setAttribute('data-original-size', 
+                    `Original: ${files[0].size} bytes, Resized: ${resizedImage.width}x${resizedImage.height}`);
+                
+                uploadedImage.onload = () => {
+                    element.innerHTML = "Analyzing image...";
+                    if (classifier) {
+                        classifier.classify(uploadedImage, (err, results) => {
+                            if (err) {
+                                console.error('Classification error:', err);
+                                element.innerHTML = "Error analyzing image.";
+                                return;
+                            }
+                            
+                            // Display results with image information
                             let html = '<h3>Top Predictions:</h3>';
+                            html += `<p class="image-info">${uploadedImage.getAttribute('data-original-size')}</p>`;
                             
                             results.forEach((prediction, index) => {
                                 const confidence = (prediction.confidence * 100).toFixed(2);
-                                const label = prediction.label.split(',')[0]; // Get primary label
+                                const label = prediction.label.split(',')[0];
                                 const className = index === 0 ? 'prediction top' : 'prediction';
                                 
                                 html += `
@@ -98,14 +202,15 @@
                             });
                             
                             element.innerHTML = html;
-                        } else {
-                            element.innerHTML = "Could not analyze image.";
-                        }
-                    });
-                } else {
-                    element.innerHTML = "Model not loaded yet. Please try again in a moment.";
-                }
-            };
+                        });
+                    }
+                };
+            } catch (error) {
+                console.error('Error processing image:', error);
+                element.innerHTML = "Error processing image.";
+            }
+        } else {
+            element.innerHTML = "Please upload an image file.";
         }
     }
     </script>

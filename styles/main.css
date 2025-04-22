@@ -639,35 +639,95 @@ ul:empty::after {
 }
 
 /* Move styles from ml5.html to main.css */
-.uploadedImage {
-    max-width: 500px;
+.drop-zone {
+    width: 100%;
+    min-height: 200px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
     margin: 20px 0;
+    transition: all 0.3s ease;
+    background-color: var(--bg-secondary);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.drop-zone-active {
+    border-color: var(--accent-color);
+    background-color: var(--bg-hover);
+}
+
+.drop-zone-text {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+.drop-zone-text span {
     display: block;
+    margin: 10px 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
 }
 
-.imageInput {
-    margin: 20px 0;
-    text-align: right;
+.uploadedImage {
+    max-width: 100%;
+    max-height: 400px;
+    margin: 20px auto;
+    display: block;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    object-fit: contain;
 }
 
-.imageInput label {
-    margin-right: 10px;
-    font-weight: bold;
+.image-info {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin: 10px 0;
+    padding: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    text-align: center;
 }
 
+/* Add loading state */
+.uploadedImage.loading {
+    opacity: 0.7;
+    filter: blur(2px);
+    transition: opacity 0.3s, filter 0.3s;
+}
+
+/* Add animation for image loading */
+@keyframes imageLoad {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.uploadedImage {
+    animation: imageLoad 0.3s ease-in;
+}
+
+/* Update existing .custom-file-upload styles */
 .custom-file-upload {
     display: inline-block;
-    padding: 6px 12px;
+    padding: 8px 16px;
     cursor: pointer;
     background-color: var(--accent-color);
     color: white;
     border-radius: 4px;
     border: none;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    margin-top: 10px;
 }
 
 .custom-file-upload:hover {
     background-color: var(--accent-hover);
+    transform: translateY(-1px);
 }
 
 input[type="file"] {
@@ -760,4 +820,62 @@ ul {
 /* Ensure all transitions are smooth */
 * {
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.history-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.history-entry {
+    padding: 8px;
+    margin: 4px 0;
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9em;
+}
+
+.event-new {
+    background: var(--success-light);
+}
+
+.event-confidence_change {
+    background: var(--warning-light);
+}
+
+.history-time {
+    color: var(--text-secondary);
+    min-width: 70px;
+}
+
+.history-label {
+    font-weight: bold;
+    flex: 1;
+}
+
+.history-confidence {
+    color: var(--accent-color);
+}
+
+.history-zone {
+    background: var(--accent-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+.history-stats {
+    padding: 10px;
+    margin-bottom: 15px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    border-left: 4px solid var(--accent-color);
 }
