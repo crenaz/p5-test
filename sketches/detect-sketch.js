@@ -7,6 +7,16 @@ let frameRateValue = "0.0";
 let showBoxes = true;
 let showLabels = true;
 let showFPS = true;
+// Add these constants at the top with other global variables
+const PERSISTENCE_TIMEOUT = 60; // Frames before object is removed (currently 100)
+const LERP_AMOUNT = 0.8; // Smoothing factor (currently 0.75)
+const MAX_MATCHING_DISTANCE = 150; // Maximum pixels distance for matching objects
+
+// Add at the top with other global variables
+let detectionZones = [];
+let isDrawingZone = false;
+let startPoint = null;
+let activeZone = null;
 
 // Add statistics object
 let statistics = {
@@ -38,6 +48,26 @@ function getCategoryColor(category) {
 
   // Return the mapped color or a default color if category isn't mapped
   return categoryColors[normalizedCategory] || "#4CAF50"; // Default to your original green
+}
+
+// Add these configuration options
+const ZONE_COLORS = {
+  default: { fill: "rgba(0, 255, 0, 0.2)", stroke: "#00FF00" },
+  active: { fill: "rgba(255, 165, 0, 0.3)", stroke: "#FFA500" },
+};
+
+// Add this function to check if a point is inside a zone
+function isPointInZone(x, y, zone) {
+  return (
+    x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h
+  );
+}
+
+// Add this function to check if an object intersects with a zone
+function isObjectInZone(object, zone) {
+  const objectCenterX = object.x + object.width / 2;
+  const objectCenterY = object.y + object.height / 2;
+  return isPointInZone(objectCenterX, objectCenterY, zone);
 }
 
 function preload() {
@@ -91,6 +121,11 @@ function setupToggleControls() {
   document.getElementById("toggleFPS").addEventListener("change", (e) => {
     showFPS = e.target.checked;
   });
+
+  // Add export zones button handler
+  document
+    .getElementById("exportZones")
+    .addEventListener("click", exportZoneData);
 }
 
 function setup() {
@@ -213,10 +248,11 @@ function gotDetections(error, results) {
         object.id = idCount;
         idCount++;
         existing.push(object);
-        object.timer = 100;
+        object.timer = PERSISTENCE_TIMEOUT;
+        object.isNew = true; // Flag for new objects
       } else {
-        // Find the object closest?
-        let recordDist = Infinity;
+        // Find the closest matching object
+        let recordDist = MAX_MATCHING_DISTANCE;
         let closest = null;
         for (let candidate of existing) {
           let d = dist(candidate.x, candidate.y, object.x, object.y);
@@ -226,28 +262,58 @@ function gotDetections(error, results) {
           }
         }
         if (closest) {
-          // copy x,y,w,h
-          let amt = 0.75;
-          closest.x = lerp(object.x, closest.x, amt);
-          closest.y = lerp(object.y, closest.y, amt);
-          closest.width = lerp(object.width, closest.width, amt);
-          closest.height = lerp(object.height, closest.height, amt);
+          // Smooth position updates
+          closest.x = lerp(object.x, closest.x, LERP_AMOUNT);
+          closest.y = lerp(object.y, closest.y, LERP_AMOUNT);
+          closest.width = lerp(object.width, closest.width, LERP_AMOUNT);
+          closest.height = lerp(object.height, closest.height, LERP_AMOUNT);
+          closest.confidence = object.confidence; // Update confidence
           closest.taken = true;
-          closest.timer = 100;
+          closest.timer = PERSISTENCE_TIMEOUT;
+          closest.isNew = false;
         } else {
+          // Create new object if no match found
           object.id = idCount;
           idCount++;
+          object.timer = PERSISTENCE_TIMEOUT;
+          object.isNew = true;
           existing.push(object);
-          object.timer = 100;
         }
       }
     } else {
       object.id = idCount;
       idCount++;
+      object.timer = PERSISTENCE_TIMEOUT;
+      object.isNew = true;
       detections[label] = [object];
-      object.timer = 100;
     }
   }
+
+  // Update zone statistics
+  detectionZones.forEach((zone) => {
+    // Clear current objects
+    zone.objectsInside = {};
+
+    // Check each detection
+    Object.keys(detections).forEach((label) => {
+      detections[label].forEach((object) => {
+        if (isObjectInZone(object, zone)) {
+          zone.objectsInside[object.id] = {
+            label: object.label,
+            confidence: object.confidence,
+            timestamp: new Date(),
+          };
+          zone.stats.totalDetections++;
+          zone.stats.lastDetection = new Date();
+        }
+      });
+    });
+
+    zone.stats.currentObjects = Object.keys(zone.objectsInside).length;
+  });
+
+  // Update statistics display
+  updateZoneStatistics();
 
   // Continue detection
   detector.detect(video, gotDetections);
@@ -270,6 +336,7 @@ function draw() {
         let object = objects[i];
         if (object.label !== "person") {
           const objectColor = getCategoryColor(object.label);
+          const alpha = map(object.timer, 0, PERSISTENCE_TIMEOUT, 0, 255);
 
           // Draw rectangle if enabled
           if (showBoxes) {
@@ -277,12 +344,26 @@ function draw() {
             strokeWeight(4);
             noFill();
             rect(object.x, object.y, object.width, object.height);
+
+            // Add persistence indicator
+            const persistenceWidth = map(
+              object.timer,
+              0,
+              PERSISTENCE_TIMEOUT,
+              0,
+              object.width
+            );
+            noStroke();
+            fill(objectColor + "40"); // 25% opacity
+            rect(object.x, object.y - 5, persistenceWidth, 3);
           }
 
           // Draw label if enabled
           if (showLabels) {
             const labelText = `${object.label} ${object.id}`;
             const textWidth = textSize() * labelText.length * 0.6;
+
+            // Background for label
             fill(objectColor + "80");
             noStroke();
             rect(
@@ -291,17 +372,68 @@ function draw() {
               textWidth,
               textSize() + 4
             );
+
+            // Label text
             fill(255);
-            textSize(32);
+            textSize(16);
             text(labelText, object.x + 10, object.y + 24);
+
+            // Confidence and timer
+            textSize(12);
+            text(
+              `Conf: ${(object.confidence * 100).toFixed(0)}% | T: ${
+                object.timer
+              }`,
+              object.x + 10,
+              object.y + 40
+            );
           }
         }
 
-        object.timer -= 2;
+        // Decrease timer
+        object.timer -= 1;
         if (object.timer < 0) {
           objects.splice(i, 1);
         }
       }
+    }
+
+    // Draw detection zones
+    detectionZones.forEach((zone) => {
+      const isActive = Object.keys(zone.objectsInside).length > 0;
+      const colors = isActive ? ZONE_COLORS.active : ZONE_COLORS.default;
+
+      // Draw zone
+      fill(colors.fill);
+      stroke(colors.stroke);
+      strokeWeight(2);
+      rect(zone.x, zone.y, zone.w, zone.h);
+
+      // Draw zone label
+      noStroke();
+      fill(0);
+      textSize(14);
+      text(`Zone ${zone.id + 1}`, zone.x + 5, zone.y + 20);
+      text(
+        `Objects: ${Object.keys(zone.objectsInside).length}`,
+        zone.x + 5,
+        zone.y + 40
+      );
+    });
+
+    // Draw zone being created
+    if (isDrawingZone && startPoint) {
+      const w = mouseX - startPoint.x;
+      const h = mouseY - startPoint.y;
+      fill(ZONE_COLORS.default.fill);
+      stroke(ZONE_COLORS.default.stroke);
+      strokeWeight(2);
+      rect(
+        w > 0 ? startPoint.x : mouseX,
+        h > 0 ? startPoint.y : mouseY,
+        Math.abs(w),
+        Math.abs(h)
+      );
     }
 
     // Draw frame rate if enabled
@@ -351,6 +483,16 @@ function exportStatistics() {
     ...statistics,
     sessionStartTime: statistics.sessionStartTime.toISOString(),
     lastUpdate: statistics.lastUpdate.toISOString(),
+    zones: detectionZones.map((zone) => ({
+      id: zone.id,
+      dimensions: {
+        x: zone.x,
+        y: zone.y,
+        width: zone.w,
+        height: zone.h,
+      },
+      stats: zone.stats,
+    })),
   };
 
   const dataStr = JSON.stringify(exportData, null, 2);
@@ -363,4 +505,158 @@ function exportStatistics() {
   linkElement.setAttribute("href", dataUri);
   linkElement.setAttribute("download", exportName);
   linkElement.click();
+}
+
+// Add mouse interaction functions
+function mousePressed() {
+  if (mouseX < width && mouseY < height) {
+    isDrawingZone = true;
+    startPoint = { x: mouseX, y: mouseY };
+  }
+}
+
+function mouseDragged() {
+  // Update for live preview while drawing
+  if (isDrawingZone && startPoint) {
+    // Will be drawn in the draw() function
+  }
+}
+
+function mouseReleased() {
+  if (isDrawingZone && startPoint) {
+    const w = mouseX - startPoint.x;
+    const h = mouseY - startPoint.y;
+
+    // Only create zone if it has some size
+    if (Math.abs(w) > 10 && Math.abs(h) > 10) {
+      const newZone = {
+        x: w > 0 ? startPoint.x : mouseX,
+        y: h > 0 ? startPoint.y : mouseY,
+        w: Math.abs(w),
+        h: Math.abs(h),
+        id: detectionZones.length,
+        objectsInside: {},
+        stats: {
+          totalDetections: 0,
+          currentObjects: 0,
+          lastDetection: null,
+        },
+      };
+      detectionZones.push(newZone);
+    }
+    isDrawingZone = false;
+    startPoint = null;
+  }
+}
+
+// Add this function to update the statistics display
+function updateZoneStatistics() {
+  const aList = document.getElementById("aList");
+  if (aList) {
+    // Add zone statistics to the list
+    detectionZones.forEach((zone) => {
+      const zoneHeader = document.createElement("li");
+      zoneHeader.classList.add("zone-stats");
+      zoneHeader.innerHTML = `
+                <strong>Zone ${zone.id + 1}</strong><br>
+                Current Objects: ${zone.stats.currentObjects}<br>
+                Total Detections: ${zone.stats.totalDetections}<br>
+                ${
+                  zone.stats.lastDetection
+                    ? `Last Detection: ${zone.stats.lastDetection.toLocaleTimeString()}`
+                    : "No detections yet"
+                }
+            `;
+      aList.appendChild(zoneHeader);
+    });
+  }
+}
+
+function exportZoneData() {
+  const button = document.getElementById("exportZones");
+  button.classList.add("loading");
+
+  // Prepare the export data
+  const exportData = {
+    timestamp: new Date().toISOString(),
+    totalZones: detectionZones.length,
+    zones: detectionZones.map((zone) => ({
+      id: zone.id,
+      dimensions: {
+        x: zone.x,
+        y: zone.y,
+        width: zone.w,
+        height: zone.h,
+      },
+      statistics: {
+        totalDetections: zone.stats.totalDetections,
+        currentObjects: zone.stats.currentObjects,
+        lastDetection: zone.stats.lastDetection
+          ? zone.stats.lastDetection.toISOString()
+          : null,
+      },
+      currentObjects: Object.entries(zone.objectsInside).map(([id, obj]) => ({
+        id: id,
+        label: obj.label,
+        confidence: obj.confidence,
+        lastSeen: obj.timestamp.toISOString(),
+      })),
+    })),
+    sessionStatistics: {
+      ...statistics,
+      sessionStartTime: statistics.sessionStartTime
+        ? statistics.sessionStartTime.toISOString()
+        : null,
+      lastUpdate: statistics.lastUpdate
+        ? statistics.lastUpdate.toISOString()
+        : null,
+    },
+  };
+
+  // Create the file
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const dataBlob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(dataBlob);
+
+  // Generate filename with timestamp
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `detection-zones-${timestamp}.json`;
+
+  // Create and trigger download
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+
+  // Add to document, click, and remove
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // Cleanup
+  URL.revokeObjectURL(url);
+  button.classList.remove("loading");
+
+  // Show success feedback
+  const originalText = button.textContent;
+  button.textContent = "✓ Exported!";
+  button.disabled = true;
+
+  setTimeout(() => {
+    button.textContent = originalText;
+    button.disabled = false;
+  }, 2000);
+}
+
+// Optional: Add a function to format the detection data nicely
+function formatDetectionData(detection) {
+  return {
+    label: detection.label,
+    confidence: Number(detection.confidence.toFixed(3)),
+    position: {
+      x: Math.round(detection.x),
+      y: Math.round(detection.y),
+      width: Math.round(detection.width),
+      height: Math.round(detection.height),
+    },
+  };
 }
