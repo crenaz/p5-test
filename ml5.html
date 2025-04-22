@@ -2,11 +2,36 @@
 <html>
 
 <head>
-    <!-- Include the p5.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.min.js"></script>
-    <!-- Include the ml5.js library -->
-    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+    <!-- Use specific versions of both libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
     <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .uploadedImage {
+            max-width: 500px;
+            margin: 20px 0;
+            display: block;
+        }
+        .imageInput {
+            margin: 20px 0;
+            text-align: right;
+        }
+        .imageResult {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+        .prediction {
+            margin: 10px 0;
+            padding: 8px;
+            border-left: 4px solid #4CAF50;
+            background-color: white;
+        }
+        .prediction.top {
+            border-left-color: #2196F3;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,35 +43,70 @@
         </ul>
     </nav>
     <h1>ml5 Image Classifier</h1>
-    <h2>Click "Choose File" to Add an Image</h2>
-    <div class="imageResult" id="imageResult"></div>
-    <div class="imageInput">
-        <input type="file" oninput="uploadedImage.src=window.URL.createObjectURL(this.files[0]); startImageScan()">
+    
+    <div class="content-wrapper">
+        <h2>Click "Browse" to Add an Image</h2>
+        <img class="uploadedImage" id="uploadedImage" />
+        <div class="imageResult" id="imageResult"></div>
+        <div class="imageInput">
+            <input type="file" value="Upload" accept="image/*" oninput="handleImageUpload(this)">
+        </div>
     </div>
-    <img class="uploadedImage" id="uploadedImage" />
+    
     <script>
-    // Create a variable containing the result container
     const element = document.getElementById("imageResult");
-     
-    function startImageScan() {
-        // Create a variable to initialize the ml5.js image classifier with MobileNet
-        const classifier = ml5.imageClassifier('MobileNet');
-        
-        // Scan the uploaded image
-        classifier.classify(document.getElementById("uploadedImage"), imageScanResult);
-        element.innerHTML = "Analyzing image...";
-    }
-     
-    // Check for errors and display the results if there aren't any
-    function imageScanResult(error, results) {
-        if (error) {
-            element.innerHTML = error;
-        } else {
-            let num = results[0].confidence * 100;
-            element.innerHTML = `
-                <p><strong>Label:</strong> ${results[0].label}</p>
-                <p><strong>Confidence:</strong> ${num.toFixed(2)}%</p>
-            `;
+    const uploadedImage = document.getElementById("uploadedImage");
+    let classifier;
+
+    window.addEventListener('load', () => {
+        element.innerHTML = "Loading model...";
+        classifier = ml5.imageClassifier('MobileNet', () => {
+            console.log('Model loaded');
+            element.innerHTML = "Model loaded. Please select an image.";
+        });
+    });
+    
+    function handleImageUpload(input) {
+        if (input.files && input.files[0]) {
+            element.innerHTML = "Loading image...";
+            uploadedImage.src = window.URL.createObjectURL(input.files[0]);
+            uploadedImage.onload = () => {
+                element.innerHTML = "Analyzing image...";
+                if (classifier) {
+                    classifier.classify(uploadedImage, (err, results) => {
+                        if (err) {
+                            console.error('Classification error:', err);
+                            element.innerHTML = "Error analyzing image.";
+                            return;
+                        }
+                        
+                        console.log("Classification results:", results);
+                        
+                        if (results && results.length > 0) {
+                            let html = '<h3>Top Predictions:</h3>';
+                            
+                            results.forEach((prediction, index) => {
+                                const confidence = (prediction.confidence * 100).toFixed(2);
+                                const label = prediction.label.split(',')[0]; // Get primary label
+                                const className = index === 0 ? 'prediction top' : 'prediction';
+                                
+                                html += `
+                                    <div class="${className}">
+                                        <p><strong>${index + 1}. ${label}</strong></p>
+                                        <p>Confidence: ${confidence}%</p>
+                                    </div>
+                                `;
+                            });
+                            
+                            element.innerHTML = html;
+                        } else {
+                            element.innerHTML = "Could not analyze image.";
+                        }
+                    });
+                } else {
+                    element.innerHTML = "Model not loaded yet. Please try again in a moment.";
+                }
+            };
         }
     }
     </script>
